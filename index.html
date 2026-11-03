@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Candidato Idle</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="icone-192.png">
+<meta name="theme-color" content="#0B0F1A">
+</head>
+<body>
+<div class="jogo" id="app">
+  <header class="hud">
+    <div class="hud-linha">
+      <div class="cargo-bloco"><mark class="cargo-selo" id="cargo-atual">Sem mandato</mark><span class="hud-info" id="carreira-rotulo">1ª carreira</span></div>
+      <div class="hud-botoes">
+      <button type="button" class="hud-botao" id="abrir-metas" aria-label="Agenda e metas"><img class="pixel" src="assets/icones/metas.png" alt=""><span class="badge" id="badge-metas" hidden></span></button>
+      <button type="button" class="hud-botao" id="abrir-loja" aria-label="Loja"><img class="pixel" src="assets/icones/loja.png" alt=""><span class="badge" id="badge-loja" hidden></span></button>
+      <button type="button" class="engrenagem" id="abrir-ajustes" aria-label="Ajustes"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+      </div>
+    </div>
+    <div class="rumo" id="rumo">
+      <div class="rumo-linha"><span>Rumo a <strong id="proximo-cargo">Vereador</strong></span><span class="num"><span id="rumo-num">0 / 15 mil</span> <span class="eta" id="rumo-eta"></span></span></div>
+      <div class="trilho" role="progressbar" aria-label="Progresso até a próxima eleição" aria-valuemin="0" aria-valuemax="100" id="trilho"><span id="trilho-fill"></span></div>
+    </div>
+    <div class="hud-linha">
+      <div class="moeda"><span class="votos num" id="votos">0</span><span class="hud-info">votos · <span class="num" id="votos-seg">0</span>/s</span></div>
+      <div class="moeda dir"><span class="dinheiro num" id="apoio">R$ 0</span><span class="hud-info"><span class="num" id="renda-seg">R$ 0</span>/s</span></div>
+    </div>
+    <!-- Selos em ordem de importância: só os 3 primeiros visíveis aparecem; o botão "+N" mostra o resto (ver organizarSelos). -->
+    <div class="selos" id="selos" aria-label="Efeitos ativos">
+      <span class="selo ruim investigacao" id="invest" hidden>Investigação <span class="mini-trilho"><span id="invest-fill"></span></span> <span class="num" id="invest-num">0%</span></span>
+      <span class="selo bom" id="comicio-selo" hidden></span><span class="selo bom" id="interino-selo" hidden></span><span class="selo bom" id="boost-selo" hidden></span><span class="selo" id="mod-selo" hidden></span>
+      <span class="selo bom" id="tv-selo" hidden></span><span class="selo bom" id="quente-selo" hidden></span><span class="selo bom" id="reporter-selo" hidden></span><span class="selo" id="aprovacao-selo" hidden></span>
+      <span class="selo bom" id="calendario-selo" hidden></span><span class="selo bom" id="ficha-selo" hidden>Ficha limpa +15%</span>
+      <button type="button" class="selo mais" id="selos-mais" hidden aria-expanded="false"></button>
+    </div>
+  </header>
+
+  <section class="cena" id="cena" aria-label="Rua da campanha">
+    <div class="rua" id="rua" aria-hidden="true"></div>
+    <div class="balao" id="balao" hidden>Pausa pra água</div>
+    <div id="flutuantes"></div>
+    <div class="folego"><span>Fôlego</span><div class="trilho"><span id="folego-fill"></span></div></div>
+
+    <div class="lado esq">
+      <button type="button" class="lateral" id="abrir-renascer" aria-describedby="renascer-trava"><img class="pixel" src="assets/icones/estrela.png" alt="">Novo<span class="trava-acessivel"> (nova candidatura)</span><span class="trava" id="renascer-trava"></span><span class="badge" id="renascer-badge" hidden></span></button>
+      <button type="button" class="lateral" id="abrir-mandato" hidden><img class="pixel" src="assets/icones/mandato.png" alt="">Mandato<span class="badge" id="badge-mandato" hidden></span></button>
+    </div>
+    <div class="lado dir">
+      <button type="button" class="acelerar" id="panfletar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18l7-6-7-6M12 18l7-6-7-6"/></svg>Acelerar</button>
+      <button type="button" class="comicio" id="comicio" hidden><img class="pixel" src="assets/icones/comicio.png" alt="">Comício<span class="num" id="comicio-tempo"></span></button>
+      <button type="button" class="comicio boost" id="boost" hidden><img class="pixel" src="assets/icones/tv.png" alt=""><b class="rotulo">Votos ×2</b><span class="num" id="boost-tempo"></span></button>
+    </div>
+    <button class="confirma" id="eleicao" type="button" hidden>Confirma<span id="eleicao-texto">Disputar eleição para Vereador</span></button>
+  </section>
+
+  <section class="painel" aria-label="Campanha">
+    <div class="abas" role="tablist">
+      <button type="button" role="tab" class="aba" id="aba-equipe" aria-controls="painel-equipe" aria-selected="true">Equipe<span class="badge" id="badge-equipe" hidden></span></button>
+      <button type="button" role="tab" class="aba" id="aba-melhorias" aria-controls="painel-melhorias" aria-selected="false">Melhorias<span class="badge" id="badge-melhorias" hidden></span></button>
+      <button type="button" role="tab" class="aba" id="aba-hab" aria-controls="painel-hab" aria-selected="false">Habilidades<span class="badge" id="badge-hab" hidden></span></button>
+    </div>
+    <div class="painel-corpo" id="painel-equipe" role="tabpanel" aria-labelledby="aba-equipe">
+      <div class="painel-topo">
+        <button type="button" class="auto-compra" id="auto-compra" aria-pressed="true" hidden>Auto</button>
+        <div class="modo" role="group" aria-label="Quantidade por compra">
+          <button type="button" id="modo-1" data-modo="1" aria-pressed="true">×1</button>
+          <button type="button" id="modo-10" data-modo="10" aria-pressed="false">×10</button>
+          <button type="button" id="modo-max" data-modo="max" aria-pressed="false">Máx</button>
+        </div>
+      </div>
+      <div class="lista" id="lista"></div>
+    </div>
+    <div class="painel-corpo" id="painel-melhorias" role="tabpanel" aria-labelledby="aba-melhorias" hidden>
+      <div class="lista" id="melhorias"></div>
+    </div>
+    <div class="painel-corpo" id="painel-hab" role="tabpanel" aria-labelledby="aba-hab" hidden>
+      <div class="lista" id="habilidades"></div>
+    </div>
+  </section>
+</div>
+
+<div class="aviso" id="janela-mandato" hidden>
+  <div class="aviso-caixa janela" role="dialog" aria-modal="true" aria-labelledby="mandato-titulo">
+    <div class="janela-cab"><h2 id="mandato-titulo">Mandato</h2><button type="button" class="fechar" data-fecha="janela-mandato" aria-label="Fechar">×</button></div>
+    <p class="nota">Cada cargo libera uma ação nova.</p>
+    <div class="lista" id="mandato"></div>
+  </div>
+</div>
+
+<div class="aviso" id="janela-metas" hidden>
+  <div class="aviso-caixa janela" role="dialog" aria-modal="true" aria-labelledby="metas-titulo">
+    <div class="janela-cab"><h2 id="metas-titulo">Agenda e metas</h2><button type="button" class="fechar" data-fecha="janela-metas" aria-label="Fechar">×</button></div>
+    <h3 class="subtitulo">Agenda de campanha · <span class="num" id="agenda-dia">dia 1</span></h3>
+    <p class="nota">Um prêmio por dia seguido que você entra. Faltou um dia, volta para o dia 1.</p>
+    <div class="agenda" id="agenda"></div>
+    <div class="acoes"><button type="button" class="secundario" id="agenda-resgatar">Resgatar</button></div>
+    <h3 class="subtitulo">Metas do dia</h3>
+    <p class="nota" id="metas-nota"></p>
+    <div class="lista" id="metas"></div>
+    <div class="acoes"><button type="button" class="secundario anuncio" id="metas-anuncio" hidden></button></div>
+    <h3 class="subtitulo">Meta da semana</h3>
+    <div class="lista" id="meta-semana"></div>
+  </div>
+</div>
+
+<div class="aviso" id="janela-conquistas" hidden>
+  <div class="aviso-caixa janela" role="dialog" aria-modal="true" aria-labelledby="conquistas-titulo">
+    <div class="janela-cab"><h2 id="conquistas-titulo">Conquistas</h2><button type="button" class="fechar" data-fecha="janela-conquistas" aria-label="Fechar">×</button></div>
+    <p class="nota" id="conquistas-nota"></p>
+    <div class="lista" id="conquistas"></div>
+  </div>
+</div>
+
+<div class="aviso" id="janela-ajustes" hidden>
+  <div class="aviso-caixa janela" role="dialog" aria-modal="true" aria-labelledby="ajustes-titulo">
+    <div class="janela-cab"><h2 id="ajustes-titulo">Ajustes</h2><button type="button" class="fechar" data-fecha="janela-ajustes" aria-label="Fechar">×</button></div>
+    <div class="menu">
+      <button type="button" class="secundario chave" id="chave-som" role="switch" aria-checked="true">Som <span></span></button>
+      <button type="button" class="secundario chave" id="chave-vibra" role="switch" aria-checked="true">Vibração <span></span></button>
+      <button type="button" class="secundario chave" id="chave-notif" role="switch" aria-checked="true" hidden>Notificações <span></span></button>
+      <button type="button" class="secundario" id="abrir-conquistas">Conquistas</button>
+      <button type="button" class="secundario" id="abrir-galeria">Galeria de ex-presidentes</button>
+      <button type="button" class="secundario" id="abrir-relatorio" hidden>Relatório da campanha</button>
+      <button type="button" class="secundario" id="abrir-save">Código do save</button>
+      <button type="button" class="secundario" id="trocar-comite" hidden>Trocar de comitê</button>
+      <button type="button" class="secundario" id="abrir-privacidade">Política de privacidade</button>
+      <button type="button" class="secundario alerta" id="zerar">Apagar progresso</button>
+    </div>
+    <div class="acoes" id="dev" hidden>
+      <button type="button" class="secundario" id="turbo">Ligar turbo (30×)</button>
+      <span class="nota">Só aparece no modo de teste.</span>
+    </div>
+  </div>
+</div>
+
+<!-- Política de privacidade: o texto vem de public/privacidade.html (cópia de site/privacidade.html), carregado ao abrir. -->
+<div class="aviso" id="janela-privacidade" hidden>
+  <div class="aviso-caixa janela" role="dialog" aria-modal="true" aria-labelledby="privacidade-titulo">
+    <div class="janela-cab"><h2 id="privacidade-titulo">Privacidade</h2><button type="button" class="fechar" data-fecha="janela-privacidade" aria-label="Fechar">×</button></div>
+    <div class="politica" id="privacidade-texto"></div>
+  </div>
+</div>
+
+<div class="aviso" id="janela-renascer" hidden>
+  <div class="aviso-caixa janela" role="dialog" aria-modal="true" aria-labelledby="renascer-titulo">
+    <div class="janela-cab"><h2 id="renascer-titulo">Nova candidatura</h2><button type="button" class="fechar" data-fecha="janela-renascer" aria-label="Fechar">×</button></div>
+    <!-- Três abas: lançar a nova candidatura, loja de Legado e Biografia (esta só aparece perto da aposentadoria). -->
+    <div class="abas-janela" role="tablist">
+      <button type="button" role="tab" id="aba-novo" aria-controls="painel-novo" aria-selected="true">Lançar</button>
+      <button type="button" role="tab" id="aba-legado" aria-controls="painel-legado" aria-selected="false">Legado <span class="num" id="renascer-saldo">0 CP</span></button>
+      <button type="button" role="tab" id="aba-biografia" aria-controls="painel-biografia" aria-selected="false" hidden>Biografia</button>
+    </div>
+    <div id="painel-novo" role="tabpanel" aria-labelledby="aba-novo">
+      <button type="button" class="botao-grande lancar" id="renascer">Lançar nova candidatura</button>
+      <p class="previsao" id="renascer-previsao" hidden><span class="selo bom" id="renascer-vale" hidden>Vale renascer!</span> <span id="renascer-previsao-txt"></span></p>
+      <p id="renascer-resumo"></p>
+      <p class="nota" id="renascer-dica"></p>
+      <p class="candidatura-linha"><span id="proxima-candidatura"></span> <button type="button" class="ver-rua" id="mudar-candidatura">Mudar</button></p>
+      <h3 class="subtitulo">Perfil da nova candidatura</h3>
+      <div class="perfis" id="perfis" role="radiogroup" aria-label="Perfil da nova candidatura"></div>
+    </div>
+    <div id="painel-legado" role="tabpanel" aria-labelledby="aba-legado" hidden>
+      <p class="nota">Ficam para sempre, até o nível 20.</p>
+      <div class="lista" id="legado"></div>
+    </div>
+    <div id="painel-biografia" role="tabpanel" aria-labelledby="aba-biografia" hidden>
+      <div id="bloco-aposentar" hidden>
+        <h3 class="subtitulo">Aposentadoria</h3>
+        <p id="aposentar-texto"></p>
+        <div class="acoes"><button type="button" class="secundario alerta" id="aposentar">Aposentar e escrever a biografia</button></div>
+      </div>
+      <div id="bloco-biografia" hidden>
+        <h3 class="subtitulo">Biografia · <span class="num" id="biografia-saldo">0 pontos</span></h3>
+        <p class="nota">Vantagens permanentes: nunca zeram, nem na aposentadoria.</p>
+        <div class="lista" id="biografia"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="aviso" id="janela-loja" hidden>
+  <div class="aviso-caixa janela" role="dialog" aria-modal="true" aria-labelledby="loja-titulo">
+    <div class="janela-cab"><h2 id="loja-titulo">Loja</h2><button type="button" class="fechar" data-fecha="janela-loja" aria-label="Fechar">×</button></div>
+    <p class="nota" id="loja-nota"></p>
+    <div class="lista" id="loja"></div>
+    <div class="acoes"><button type="button" class="secundario" id="restaurar">Restaurar compras</button></div>
+  </div>
+</div>
+
+<!-- Candidatura: nome na urna e candidato ou candidata. Abre sozinha no primeiro jogo (sem fechar), em Ajustes
+     (só o nome) e na aba Lançar (nome e sexo da próxima candidatura). -->
+<div class="aviso" id="janela-candidatura" hidden>
+  <div class="aviso-caixa janela" role="dialog" aria-modal="true" aria-labelledby="cand-titulo">
+    <div class="janela-cab"><h2 id="cand-titulo">Sua candidatura</h2><button type="button" class="fechar" data-fecha="janela-candidatura" aria-label="Fechar">×</button></div>
+    <p class="nota" id="cand-intro"></p>
+    <div class="formulario"><label>Nome na urna<input type="text" id="cand-nome" autocomplete="off" spellcheck="false"></label></div>
+    <div class="sexos" id="cand-sexos" role="radiogroup" aria-label="Candidato ou candidata"></div>
+    <p class="nota" id="cand-nota"></p>
+    <div class="acoes"><button type="button" class="botao-grande" id="cand-ok">Lançar candidatura</button></div>
+  </div>
+</div>
+
+<!-- Registro de candidatura (loja): número, partido, cor das bandeiras e slogan. Dá para preencher antes de comprar. -->
+<div class="aviso" id="janela-registro" hidden>
+  <div class="aviso-caixa janela" role="dialog" aria-modal="true" aria-labelledby="registro-titulo">
+    <div class="janela-cab"><h2 id="registro-titulo">Registro de candidatura</h2><button type="button" class="fechar" data-fecha="janela-registro" aria-label="Fechar">×</button></div>
+    <div class="registro-previa" aria-hidden="true">
+      <span class="bandeira-previa" id="reg-bandeira">VOTE<b id="reg-bandeira-num">69</b></span>
+      <div><b id="reg-previa-nome"></b><small id="reg-previa-partido"></small><i id="reg-previa-slogan"></i></div>
+    </div>
+    <div class="formulario">
+      <label>Número (10 a 99)<input type="text" id="reg-numero" inputmode="numeric" maxlength="2" autocomplete="off"></label>
+      <label>Sigla do partido<input type="text" id="reg-sigla" autocomplete="off" spellcheck="false"></label>
+      <label>Nome do partido<input type="text" id="reg-partido" autocomplete="off"></label>
+      <div class="campo"><span>Cor das bandeiras</span><div class="cores" id="reg-cores" role="radiogroup" aria-label="Cor das bandeiras"></div></div>
+      <label>Slogan (opcional)<input type="text" id="reg-slogan" autocomplete="off" placeholder="Ninguém fica pra trás"></label>
+    </div>
+    <p class="nota" id="reg-nota"></p>
+    <div class="acoes"><button type="button" class="botao-grande" id="reg-salvar">Salvar registro</button></div>
+  </div>
+</div>
+
+<div class="aviso" id="janela-save" hidden>
+  <div class="aviso-caixa janela" role="dialog" aria-modal="true" aria-labelledby="save-titulo">
+    <div class="janela-cab"><h2 id="save-titulo">Código do save</h2><button type="button" class="fechar" data-fecha="janela-save" aria-label="Fechar">×</button></div>
+    <p>Guarde este código para recuperar o jogo ou continuar em outro celular.</p>
+    <textarea class="copia" id="save-codigo" rows="6" spellcheck="false" aria-label="Código do save"></textarea>
+    <div class="acoes">
+      <button type="button" class="secundario" id="save-copiar">Copiar código</button>
+      <button type="button" class="secundario alerta" id="save-carregar">Carregar código colado</button>
+    </div>
+    <p class="nota">Para carregar: cole o código na caixa no lugar deste. O jogo atual é substituído.</p>
+  </div>
+</div>
+
+<div class="aviso" id="janela-galeria" hidden>
+  <div class="aviso-caixa janela" role="dialog" aria-modal="true" aria-labelledby="galeria-titulo">
+    <div class="janela-cab"><h2 id="galeria-titulo">Galeria de ex-presidentes</h2><button type="button" class="fechar" data-fecha="janela-galeria" aria-label="Fechar">×</button></div>
+    <p class="nota" id="galeria-nota"></p>
+    <div class="lista" id="galeria"></div>
+  </div>
+</div>
+
+<div class="aviso" id="janela-relatorio" hidden>
+  <div class="aviso-caixa janela" role="dialog" aria-modal="true" aria-labelledby="relatorio-titulo">
+    <div class="janela-cab"><h2 id="relatorio-titulo">Relatório</h2><button type="button" class="fechar" data-fecha="janela-relatorio" aria-label="Fechar">×</button></div>
+    <p>Se você está testando o jogo, copie este relatório e mande para quem te enviou o link.</p>
+    <dl class="tabela num" id="tabela"></dl>
+    <div class="acoes">
+      <button type="button" class="secundario" id="copiar">Copiar relatório</button>
+    </div>
+    <textarea class="copia" id="copia-fallback" readonly hidden rows="9"></textarea>
+  </div>
+</div>
+
+<!-- Aviso simples -->
+<div class="aviso" id="aviso" hidden>
+  <div class="aviso-caixa centro" role="dialog" aria-modal="true" aria-labelledby="aviso-grande">
+    <div class="grande" id="aviso-grande">FIM</div>
+    <div class="destaques" id="aviso-destaques" hidden></div>
+    <p id="aviso-texto"></p>
+    <p class="manchete" id="aviso-manchete" hidden><small>Jornal do Bairro</small><span></span></p>
+    <button type="button" class="secundario anuncio" id="aviso-anuncio" hidden></button>
+    <button type="button" class="secundario extra" id="aviso-extra" hidden></button>
+    <button type="button" class="botao-grande" id="aviso-ok">Continuar</button>
+  </div>
+</div>
+
+<!-- Apuração -->
+<div class="aviso" id="apuracao" hidden>
+  <div class="aviso-caixa apuracao" role="dialog" aria-modal="true" aria-labelledby="ap-titulo">
+    <div class="olho"><span>Apuração</span><span class="num" id="ap-secoes">Seções apuradas: 0%</span></div>
+    <h3 id="ap-titulo">Eleição para Vereador</h3>
+    <p class="ap-chance" id="ap-chance"></p>
+    <div class="ap-palco" id="ap-palco" hidden></div>
+    <div class="ap-lista" id="ap-lista"></div>
+    <p class="manchete" id="ap-manchete" hidden><small>Jornal do Bairro</small><span></span></p>
+    <p class="ap-texto" id="ap-texto" hidden></p>
+    <button type="button" class="secundario anuncio" id="ap-recontagem" hidden></button>
+    <button type="button" class="botao-grande" id="ap-ok" hidden>Tomar posse</button>
+    <button type="button" class="pular" id="ap-pular">Pular apuração</button>
+  </div>
+</div>
+
+<!-- Crise -->
+<div class="aviso" id="crise" hidden>
+  <div class="aviso-caixa crise" role="dialog" aria-modal="true" aria-labelledby="cr-titulo">
+    <div class="olho"><span>Crise na campanha</span></div>
+    <h3 id="cr-titulo"></h3>
+    <p id="cr-texto"></p>
+    <div class="opcoes" id="cr-opcoes"></div>
+    <p class="resultado" id="cr-resultado" hidden></p>
+    <button type="button" class="secundario anuncio" id="cr-anuncio" hidden>Ver anúncio e tentar de novo</button>
+    <button type="button" class="botao-grande" id="cr-ok" hidden>Continuar</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
